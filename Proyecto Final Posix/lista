@@ -1,0 +1,24 @@
+super importante hacer una interfaz para inicar sesion: //listo
+esta parte sera para poder accesar a su mysql //listo
+
+en caso de presentar error, intentar poder validar o salir. //pendiente
+
+1.- mostrar toda la informacion //listo
+2.- Desplegar solamente //pendiente
+	a.- Edad
+	b.- Estatura
+	c.- Peso
+		2.i)generar reporte de la info, aqui usaremos graficas //pendiente
+3.- Añadir informacion //listo 
+	-)para todas estas opciones volver a pedir contraseña y usuario
+	-)se genera un Id automaticamente
+	-)pedir Edad, estatura, peso y promedio (falta investigar
+						para que sirve lo del promedio) //pendiente (afilar detalles)
+4.- Borar informacion //listo
+	-)pedir contraseña y usuario
+	-)confirmar borrado
+	-)borrado por Id
+5.- Modificar Registros //listo
+	-)pedir contraseña y usuario
+	-)confirmar modificacion
+	-)modificacion por Id 

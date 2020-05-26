@@ -1,0 +1,57 @@
+#!/bin/bash
+#Reiniciamos la bandera
+bandera=1
+until [ "$bandera" -eq 0 ] #Iniciamos el ciclo del menu de las banderas
+do
+dialog --radiolist "¿Que tipo de grafica desea ver?" 0 0 0 1 "Estatura de acorde a Edad" on 2 "Peso de acorde a Edad" off 3 "Estatura de acorde a Peso" off 4 "Salir" off 2>/tmp/lk.$$
+if [ $? -eq 1 ] #Verificamos si no dio a la opcion CANCEL
+then
+	clear
+	exit 
+fi
+lk=$(cat /tmp/lk.$$) 	#En caso de que no, guardamos su respuesta
+echo "use medidas;
+select * from Info
+order by Edad;" > /tmp/ia	#Sacamos toda la info de la BD
+mysql -u root --password="$pass" </tmp/ia >/tmp/ia2 #La guardamos en una variable
+cat ia2 | sed '1d' | sed 's/\t/ /g'> /tmp/ia2 #sobre escribimos la variable pero con la info. limpia
+case $lk in #Checamos que opcion eligio
+1)
+	gnuplot -persist <<-EOF #iniciamos el gnuplot para graficar
+	set term png	#definimos la extension en la que saldra el archivo
+	set output "grafica.png"	#decimos como se llamara el archivo
+	set xlabel "Estatura"	#definimos cual sera la variante X
+	set ylabel "Edad"	#definimos cual sera la variante Y
+	set title "Estatura de los hombres de acorde a su Edad"	#Titulo de la grafica
+	plot "/tmp/ia2" using 3:4	#le decimos de que archivo sacara los datos a graficar y le especificamos las variantes X:Y
+	EOF	#finalizamos el gnuplot
+	display grafica.png	#mostramos el producto
+	;;
+2)
+        gnuplot -persist <<-EOF
+        set term png
+        set output "grafica.png"
+        set xlabel "Edad"
+        set ylabel "Peso"
+        set title "Peso de los hombres de acorde a su Edad"
+        plot "/tmp/ia2" using 3:2
+	EOF
+	display grafica.png
+	;;
+3)
+        gnuplot -persist <<-EOF
+        set term png
+        set output "grafica.png"
+        set xlabel "Peso"
+        set ylabel "Estatura"
+        set title "Estatura de los hombres de acorde a su Peso"
+	plot "/tmp/ia2" using 2:3
+	EOF
+	display grafica.png
+	;;
+4)
+	bandera=0	#verificamos si quiere salir
+	;;
+esac
+done 
+exit 0

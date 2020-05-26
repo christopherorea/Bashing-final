@@ -1,0 +1,266 @@
+#!/bin/bash
+
+#contador para insercion
+contador=200
+
+dialog --title "Instalacion requerida" --msgbox "Se requiere gnuplot fbi dialog para continuar, inicia secion como sudo" 0 0
+#se requiere instalacion de paquetes especiales
+sudo apt-get install gnuplot fbi dialog
+
+#inica secion con MySQL
+dialog --title "Sesion para MySQL" --passwordbox "Ingresa secion para MySQL: " 0 0 2>/tmp/info.tmp.$$
+#si pone cancelar, sale automaticamente... asi con cada uno
+if  [ $? -eq 1 ];
+then
+        exit
+	clear
+fi
+
+pass=$(cat /tmp/info.tmp.$$) #almacena password en pass
+
+#si existiera el archivo /tmp/insert significa que antes se creo la base de datos, por lo tanto se elimina
+if [ -f /tmp/insert ];
+then
+	echo "drop database medidas;" > /tmp/insert
+	mysql -u root --password="$pass" < /tmp/insert
+	rm /tmp/insert
+fi
+
+#se crea base de Datos llamada medidas
+echo "create database medidas;
+use medidas;
+create table Info(
+Id int AUTO_INCREMENT,
+Edad int(100),
+Estatura int(220),
+Peso int(200),
+Promedio int(10),
+Sexo varchar(50),
+PRIMARY KEY (Id)
+);" > /tmp/insert
+
+
+#toma del archivo datos para la creacion de la BD
+while read -r i
+do
+	Edad=$(echo "$i"| cut -d"," -f3)
+	Estatura=$(echo "$i"| cut -d"," -f4) 
+	Peso=$(echo "$i"| cut -d"," -f5) 
+	Promedio=$(echo "$i"| cut -d"," -f6) 
+	Sexo=$(echo "$i"| cut -d"," -f7)
+ 	echo "insert into Info values ('Id','$Edad','$Estatura','$Peso', '$Promedio', '$Sexo');" >>/tmp/insert 
+
+
+done <"datos"
+
+
+#no se elimino femenino hasta ahora, asi que se hace un delete para filtrar
+echo "Delete from Info where Sexo='feminino';" >> /tmp/insert
+#se hace un echo solamente para corroborar si funciona, en caso de comentado es porque funciono
+#echo "Select * from Info" >>/tmp/insert
+
+
+#se incorpora insert para hacer la base de datos y empezar las consultas
+mysql -u root --password="$pass" < /tmp/insert
+
+if [ $? -eq 1 ];
+then
+	echo "Error, contraseña incorrecta, vuelva a intentarlo"
+	exit
+fi
+
+#seccion para interfaz de usuario
+
+#se crea bandera para salir de ciclos
+bandera=0
+
+until [ "$bandera" -eq 2 ]
+do
+dialog --radiolist "¿Que deseas hacer con la informacion?" 0 0 0 1 "Desplegar info" on 2 "Insertar Informacion" off 3 "Borrar informacion" off 4 "Modificar registros" off 5 "Salir" off 2>/tmp/info.$$
+if  [ $? -eq 1 ];
+then
+        exit
+	clear
+fi
+slc=$(cat /tmp/info.$$) #almacena el valor seleccionado
+
+#se crea seccion para que despliegue informacion
+echo "use medidas;
+select * from Info;" > /tmp/sel
+#se crea seccion para modificacion de informacion
+
+#se crea seccion para insercion de informacion
+
+#1ra opcion solo despliega la informacion
+if [ "$slc" -eq 1 ]; then
+	mysql -u root --password="$pass" </tmp/sel; sleep 3
+fi
+
+#3ra opcion borra por medio de id
+if [ "$slc" -eq 3 ]; then
+bandera=1
+until [ "$bandera" -eq 0 ]
+do
+	mysql -u root --password="$pass" </tmp/sel; sleep 3
+	dialog --title "Eliminar info" --inputbox "Selecciona un Id a borrar" 0 0 2>/tmp/del.$$
+	if  [ $? -eq 1 ];
+	then
+        	bandera=0
+	fi
+
+	del=$(cat /tmp/del.$$)
+
+	S=$(echo "$del" | egrep "[[:digit:]]+")
+	if [ -n "$S" ]; then
+		#se crea un archivo para borrar informacion
+		echo "use medidas;
+		select * from Info;
+		Delete from Info where Id="$del";" > /tmp/del
+
+                mysql -u root --password="$pass"</tmp/del
+                dialog --infobox "Se elimino el Id $del" 0 0; sleep 3
+                bandera=0
+        else
+                echo "Id invalido vuelva a intentarlo"
+        fi
+done
+fi
+
+#4ta opcion modifica un campo por Id
+if [ "$slc" -eq 4 ]; then
+bandera=1
+until [ "$bandera" -eq 0 ]
+do
+	mysql -u root --password="$pass" </tmp/sel; sleep 3
+        dialog --title "Modificar info" --inputbox "Selecciona un Id a modificar" 0 0 2>/tmp/mod.$$
+	if  [ $? -eq 1 ];
+	then
+        	bandera=0
+	fi
+
+        mod=$(cat /tmp/mod.$$)
+
+        M=$(echo "$mod" | egrep "[[:digit:]]+")
+        if [ -n "$M" ]; then
+		#se debe poner los datos a modificar
+		#edad
+		dialog --title "Modificar info" --inputbox "Ingrese edad" 0 0 2>/tmp/m.edad.$$
+		edad=$(cat /tmp/m.edad.$$)
+		E=$(echo "$edad" | egrep "[[:digit:]]+")
+		if [ -n "$E" ]; then
+			#ahora se valida estatura
+			dialog --title "Modificar info" --inputbox "Ingrese estatura" 0 0 2>/tmp/m.estatura.$$
+	                estatura=$(cat /tmp/m.estatura.$$)
+        	        E=$(echo "$estatura" | egrep "[[:digit:]]+")
+                	if [ -n "$E" ]; then
+				#ahora se valida Peso
+				dialog --title "Modificar info" --inputbox "Ingrese peso" 0 0 2>/tmp/m.peso.$$
+	                	peso=$(cat /tmp/m.peso.$$)
+	        	        E=$(echo "$peso" | egrep "[[:digit:]]+")
+	                	if [ -n "$E" ]; then
+					#aqui ya se valida promedio
+					dialog --title "Modificar info" --inputbox "Ingrese promedio" 0 0 2>/tmp/m.edad.$$
+			                promedio=$(cat /tmp/m.edad.$$)
+	                		E=$(echo "$edad" | egrep "[[:digit:]]+")
+			                if [ -n "$E" ]; then
+						#con estos valores ya validados se hace un archivo y se modifica la base
+						 #se crea un archivo para borrar informacion
+				                echo "use medidas;
+				                update Info
+						set Edad='$edad',
+						Estatura='$estatura',
+						Peso='$peso',
+						Promedio='$promedio' 
+						where Id='$mod';" >/tmp/mod
+
+				                mysql -u root --password="$pass"</tmp/mod
+				                dialog --infobox "Se modifico el Id $mod" 0 0; sleep 3
+				                bandera=0
+					else
+						echo "Algo salio mal, vuelva a intentarlo [4]"
+					fi
+				else
+					echo "Algo salio mal, vuelva a intentarlo [3]"
+				fi
+
+			else
+			echo "Algo salio mal, vuelva a intentarlo [2]"
+			fi
+		else
+			echo "Algo salio mal, vuelva a intentarlo [1]"
+		fi
+        else
+                echo "Id invalido vuelva a intentarlo"
+        fi
+done
+fi
+
+
+#2da opcion inserta informacion
+if [ "$slc" -eq 2 ]; then
+bandera=1
+until [ "$bandera" -eq 0 ]
+do
+		#se debe poner los datos a modificar
+		#edad
+		dialog --title "Insertar info" --inputbox "Ingrese edad" 0 0 2>/tmp/i.edad.$$
+		if  [ $? -eq 1 ];
+		then
+		        bandera=0
+		fi
+
+		edad=$(cat /tmp/i.edad.$$)
+		E=$(echo "$edad" | egrep "[[:digit:]]+")
+		if [ -n "$E" ]; then
+			#ahora se valida estatura
+			dialog --title "Insertar info" --inputbox "Ingrese estatura" 0 0 2>/tmp/i.estatura.$$
+	                estatura=$(cat /tmp/i.estatura.$$)
+        	        E=$(echo "$estatura" | egrep "[[:digit:]]+")
+                	if [ -n "$E" ]; then
+				#ahora se valida Peso
+				dialog --title "Insertar info" --inputbox "Ingrese peso" 0 0 2>/tmp/i.peso.$$
+	                	peso=$(cat /tmp/i.peso.$$)
+	        	        E=$(echo "$peso" | egrep "[[:digit:]]+")
+	                	if [ -n "$E" ]; then
+					#aqui ya se valida promedio
+					dialog --title "Insertar info" --inputbox "Ingrese promedio" 0 0 2>/tmp/i.edad.$$
+			                promedio=$(cat /tmp/i.edad.$$)
+	                		E=$(echo "$edad" | egrep "[[:digit:]]+")
+			                if [ -n "$E" ]; then
+						#con estos valores ya validados se hace un archivo y se modifica la base
+						 #se crea un archivo para borrar informacion
+				                echo "use medidas;
+						insert into Info values 
+						($contador,$edad,$estatura,$peso,$promedio,\"masculino\");">/tmp/ins
+
+				                mysql -u root --password="$pass"</tmp/ins
+				                dialog --infobox "Se inserto los Datos" 0 0; sleep 3
+				                bandera=0
+					else
+						echo "Algo salio mal, vuelva a intentarlo [4]"
+					fi
+				else
+					echo "Algo salio mal, vuelva a intentarlo [3]"
+				fi
+
+			else
+			echo "Algo salio mal, vuelva a intentarlo [2]"
+			fi
+		else
+			echo "Algo salio mal, vuelva a intentarlo [1]"
+		fi
+done
+contador=$(expr $contador + 1)
+fi
+
+
+#5ta opcion sale del ciclo
+if [ "$slc" -eq 5 ]; then
+	bandera=2
+	clear
+fi
+
+done #fin del ciclo maestro
+
+
+exit 0
