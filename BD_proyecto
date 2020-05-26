@@ -1,0 +1,193 @@
+drop database DB_Tarjeta;
+create database DB_Tarjeta;
+use DB_Tarjeta;
+
+create table Empresa(
+Id_Empresa int AUTO_INCREMENT,
+Nombre varchar(25),
+RazonSocial varchar(50),
+RFC varchar(30),
+Direccion varchar(100),
+Telefono int(12),
+PaginaWeb varchar(50),
+Facebook varchar(50),
+Twitter varchar(50),
+Status int(1),
+PRIMARY KEY(Id_Empresa)
+);
+
+create table LogEmpresa(
+Id_LogEmpresa int AUTO_INCREMENT,
+Id_Empresa int,
+Fecha DATE,
+Hora TIME,
+Descripcion varchar(100),
+PRIMARY KEY(Id_LogEmpresa)
+);
+
+create table ServiciosEmpresa(
+Id_Empresa int,
+Id_Servicios int
+);
+
+create table TipoEmpresa(
+Id_TipoEmpresa int AUTO_INCREMENT,
+Id_Empresa int, 
+Descripcion varchar(100),
+Giro varchar (100),
+PRIMARY KEY(Id_TipoEmpresa)
+);
+
+create table DatosCuentaEmpresa(
+Id_DatosCuentaEmpresa int AUTO_INCREMENT,
+Id_Empresa int,
+Status int(1),
+NumeroCuenta int(30),
+Clabe int(50),
+PRIMARY KEY(Id_DatosCuentaEmpresa)
+);
+
+create table Cliente(
+Id_Cliente int AUTO_INCREMENT,
+Nombre varchar(50),
+Apellido varchar(50),
+Ocupacion varchar(50),
+Correo varchar(50),
+Facebook varchar(50),
+Id_Pais int,
+Sexo tinyint(1),
+FechaNacimiento DATE,
+Telefono int(12),
+PRIMARY KEY(Id_Cliente)
+);
+
+create table LogCliente(
+Id_LogCliente int AUTO_INCREMENT,
+Id_Cliente int,
+Fecha DATE,
+Hora TIME,
+Descripcion varchar(100),
+PRIMARY KEY(Id_LogCliente)
+);
+
+create table ClienteUsuario(
+Id_ClienteUsuario int AUTO_INCREMENT,
+Id_Cliente int,
+Id_DatosCuentas int,
+NombreUsuario varchar(20),
+Contraseña varchar(30),
+PRIMARY KEY(Id_ClienteUsuario)
+);
+
+create table DatosCuentas(
+Id_DatosCuentas int AUTO_INCREMENT,
+Id_ClienteUsuario int,
+Id_TipoTarjeta int,
+Status int(1),
+Monto DOUBLE(10,2),
+NumeroTarjeta int(30),
+CVV int(6),
+FechaExpiracion DATE,
+PropietarioTarjeta varchar(30),
+Clabe int(50),
+PRIMARY KEY(Id_DatosCuentas)
+);
+
+create table Nodo(
+Id_Nodo int AUTO_INCREMENT,
+Id_Empresa int,
+Id_Equipo int,
+DescripcionNodo varchar(100),
+Identificador varchar(50),
+Status int(1),
+PRIMARY KEY(Id_Nodo)
+);
+
+create table Ubicacion(
+Id_Ubicacion int AUTO_INCREMENT,
+Id_Nodo int,
+Latitud double(10,10),
+Longitud double(10,10),
+PRIMARY KEY(Id_Ubicacion)
+);
+
+create table LogNodo(
+Id_LogNodo int AUTO_INCREMENT,
+Id_Nodo int,
+Fecha DATE,
+Hora TIME,
+Descripcion varchar(100),
+PRIMARY KEY(Id_LogNodo)
+);
+
+create table CuentaNodoEmpresa(
+Id_CuentaNodoEmpresa int AUTO_INCREMENT,
+Id_Moneda int,
+Id_DatosCuentaEmpresa int,
+MontoNodo int(10),
+PRIMARY KEY(Id_CuentaNodoEmpresa)
+);
+
+create table Transacciones(
+Id_Transacciones int AUTO_INCREMENT,
+Id_Nodo int,
+Id_ClienteUsuario int,
+Id_Moneda int,
+Monto int(10),
+Fecha DATE,
+Hora TIME,
+Iva int(3),
+PRIMARY KEY(Id_Transacciones)
+);
+
+create table Token(
+Id_Token int AUTO_INCREMENT,
+Id_Transaccion int,
+Token varchar(255),
+Fechas DATE,
+Hora TIME,
+PRIMARY KEY(Id_Token)
+);
+
+create table LogTransacciones(
+Id_LogTransacciones int AUTO_INCREMENT,
+Id_Transaccion int,
+Fecha DATE,
+Hora TIME,
+Descripcion varchar(100),
+PRIMARY KEY(Id_LogTransacciones)
+);
+
+create table Moneda(
+Id_Moneda int AUTO_INCREMENT,
+Id_Pais int,
+IsoMoneda varchar(5),
+PRIMARY KEY(Id_Moneda)
+);
+
+create table Pais(
+Id_Pais int AUTO_INCREMENT,
+NombrePais varchar(100),
+IsoPais varchar(5),
+PRIMARY KEY(Id_Pais)
+);
+
+create table TipoTarjeta(
+Id_TipoTarjeta int AUTO_INCREMENT,
+Descripcion varchar(100),
+PRIMARY KEY(Id_TipoTarjeta)
+);
+
+create table Servicios(
+Id_Servicios int AUTO_INCREMENT,
+Descripcion varchar(100),
+PRIMARY KEY(Id_Servicios)
+);
+
+create table Equipos(
+Id_Equipos int AUTO_INCREMENT,
+Descripcion varchar(100),
+Status int(1),
+MacAddress varchar(50),
+PRIMARY KEY(Id_Equipos)
+);
